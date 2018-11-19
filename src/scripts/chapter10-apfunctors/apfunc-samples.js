@@ -1,5 +1,5 @@
 import { compose, map, curry, identity, chain as rchain, prop, add } from 'ramda';
-import { Maybe, join, IO, ioTrace, chain, Container } from '../chapter8-functors/functor-util';
+import { Maybe, join, IO, ioTrace, chain, Container, liftA2, Either } from '../chapter8-functors/functor-util';
 import { trace } from '../util';
 
 const contAdd2 = map(add, Container.of(2));
@@ -22,19 +22,72 @@ const getVal = compose(map(prop('value')), $);
 
 const signIn = curry((username, password, rememberMe) => console.log(username, password, rememberMe));
 
-const signer = IO.of(signIn).ap(getVal('.email')).ap(getVal('.password')).ap(IO.of(false));
+const signer = new IO(signIn).ap(getVal('.email')).joinPerform().ap(getVal('.password')).joinPerform().ap(IO.of(false));
+
+console.log('before unleashing the beast');
 
 signer.unsafePerformIO();
 
-var v = compose(map(x => console.log(x)), getVal);
+console.log('--------------------------------------------');
 
-v('.email').unsafePerformIO();
+const f = x => console.log(`${x} world`);
 
-var vv = getVal('.email')
-    .map(email => 
-        getVal('.password')
-            .map(password => signIn(email, password, false))
-        .join()
-    );
+const f2 = function outer(x) {
+    return function inner(y) {
+        console.log(x, y);        
+    }
+};
 
-vv.unsafePerformIO();
+// new IO(f).ap(IO.of('Hello')).unsafePerformIO();
+
+// new IO(f2('xx2')).ap(IO.of('yy2')).unsafePerformIO();
+
+const c = new IO(f2).ap(IO.of('xxx3')).joinPerform();
+
+const c2 = c.ap(IO.of('yyy3'));
+
+c2.unsafePerformIO();
+
+var v1 = compose(
+    f2,
+    () => 'xxx'
+)();
+
+var v2 = compose(
+    v1,
+    () => 'yyy'
+);
+
+v2();
+
+c2.unsafePerformIO();
+
+var v22 = compose(
+    compose(
+        f2,
+        () => 'xxxx'
+    ),
+    () => 'yyyy'
+);
+
+v22()();
+
+console.log('--------------------------------------------');
+
+Maybe.of(add).ap(Maybe.of(2)).ap(Maybe.of(3)).inspect();
+
+liftA2(add, Maybe.of(2), Maybe.of(3)).inspect();
+
+console.log('--------------------------------------------');
+
+const user = {
+    name: 'name',
+    email: 'email'
+};
+
+const createUser = curry((email, name) => new IO(() => console.log(`creating user ${ email } ${ name }`) ));
+
+Either.of(createUser).ap(Either.of('email2')).ap(Either.of('name2')).map(io => io.unsafePerformIO());
+
+liftA2(createUser, Either.of('email3'), Either.of('name3')).map(io => io.unsafePerformIO());
+

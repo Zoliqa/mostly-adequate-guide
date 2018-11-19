@@ -46,36 +46,47 @@ const logFileName = compose(
 
 const logger = logFileName();
 
+console.log('before unleashing the beast');
+
 logger.unsafePerformIO();
 
 console.log('--------------------------------------------');
 
 const validateEmail = email => {
-    if(match(/\S+@\S+.(com|org|net)$/, email)) {
+    if (match(/\S+@\S+.(com|org|net)$/, email).length > 0) {
         return Either.of(email);     
     }
 
     return left('Invalid email address received');
 };
 
-const mailingList = ['a@a.com', 'b@b.com'];
-
 const addToMailingList = email => new IO(() => {
-    mailingList.push(email);//return 1;
+    const mailingList = ['a@a.com', 'b@b.com'];
+
+    mailingList.push(email);
+
+    return mailingList;
 });
 
-const emailBlast = notification => new IO(() => mailingList.forEach(email => console.log(`Sending ${notification} to ${email}`)));
+const emailBlast = mailingList => new IO(() => mailingList.forEach(email => console.log(`Sending notification to ${ email }`)));
 
 const joinMailingList = compose(
-    // map(join),
-    // trace('after map emailblast'),
-    // map(emailBlast('spam')),
-    trace('after addtomailinglist'),
-    // map(join),
+    map(compose(chain(emailBlast), addToMailingList)),
+    validateEmail
+);
+
+const refactored = compose(
+    map(chain(emailBlast)),
     map(addToMailingList),
     validateEmail
 );
 
-const joinAndSendEmail = joinMailingList('alma@afaalatt.com');
+const joinAndSendEmail = refactored('alma@afaalatt.com');
 
-//joinAndSendEmail.unsafePerformIO();
+console.log('before unleashing the beast');
+
+joinAndSendEmail.map(io => io.unsafePerformIO());
+
+const joinAndSendEmail2 = refactored('kortefa.com');
+
+joinAndSendEmail2.inspect();

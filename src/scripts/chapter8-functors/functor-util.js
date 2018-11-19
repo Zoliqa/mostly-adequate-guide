@@ -2,9 +2,10 @@ import { curry, compose, map, ap } from 'ramda';
 
 const join = mma => mma.join();
 
-const chain = curry((f, m) => m.map(compose(join, f)));
+//const chain = curry((f, m) => m.map(compose(join, f)));
+//const chain = curry((f, m) => m.chain(f));
 
-const chain2 = curry((f, m) => m.map(f).join());
+const chain = curry((f, m) => m.map(f).join());
 
 // const chain = curry((f, m) => compose(join, map(f)));
 
@@ -112,6 +113,10 @@ class Left extends Either {
       return this;
     }
   
+    ap(other) {
+        return this;
+    }
+
     inspect() {
         console.log(`Left(${this.$value})`);
 
@@ -124,6 +129,10 @@ class Right extends Either {
       return Either.of(f(this.$value));
     }
   
+    ap(other) {
+        return other.map(this.$value);
+    }
+
     inspect() {
         console.log(`Right(${this.$value})`);
 
@@ -173,11 +182,11 @@ class IO {
     }
   
     join() {
-        return this.unsafePerformIO();        
+        return this.map(io => io.unsafePerformIO()); 
     }
 
     chain(fn) {
-        return chain(fn, this);
+        return chain(fn, this); //this.map(compose(io => io.unsafePerformIO(), fn));
     }
 
     ap(other) {
@@ -189,12 +198,18 @@ class IO {
 
         console.log(`IO(${ typeof log === 'object' ? JSON.stringify(log) : log })`);
     }
+
+    joinPerform() {
+        return new IO(this.unsafePerformIO());
+    }
 }
 
 const ioTrace = curry((tag, x) => map(y => { 
     console.log(tag, y); 
     return y; 
 }, x));
+
+const liftA2 = curry((g, f1, f2) => f1.map(g).ap(f2));
 
 export {
     Container,
@@ -209,5 +224,6 @@ export {
     join,
     ioTrace,
     chain,
-    map
+    map,
+    liftA2
 };

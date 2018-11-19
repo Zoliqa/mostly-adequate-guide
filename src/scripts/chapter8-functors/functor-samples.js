@@ -1,7 +1,13 @@
 import { Container, Maybe, maybe, Either, Left, Right, left, either, IO } from './functor-util';
 import { concat, add, split, trace } from '../util';
-import { curry, prop, match, compose, map, toString, identity, head, last, filter, equals } from 'ramda';
+import { curry, prop, match, compose, map, toString, identity, head, last, filter, equals, reduce, subtract } from 'ramda';
 import moment from 'moment';
+
+console.log(subtract(20, 10));
+
+const res = reduce(subtract, 20, [1, 2, 3, 4]);
+
+console.log(res);
 
 //-----------------------------------------------------------------------------------------
 

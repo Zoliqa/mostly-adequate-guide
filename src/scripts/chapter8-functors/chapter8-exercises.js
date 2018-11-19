@@ -8,7 +8,7 @@ const incrF = compose(trace('after identity'), map(add(1)), trace('after maybe')
 
 incrF(10).inspect();
 
-const user = { id: 2, name: 'Einstein', active: false };
+const user = { id: 2, name: 'Einstein', active: true };
 
 const initial = compose(map(head), map(prop('name')), Maybe.of);
 

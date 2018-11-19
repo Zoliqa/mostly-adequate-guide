@@ -64,11 +64,11 @@ const getItem = key => new IO(() => { console.log('leak'); return localStorage.g
 const setItem = (key, value) => new IO(() => localStorage.setItem(key, value));
 
 const setAndApplyPreferences = compose(
-    map(join),
+    join,
     ioTrace('after setStyle'),
     map(setStyle('#main')),
     ioTrace('after join'),
-    map(join),
+    join,
     ioTrace('after log'),
     map(log),
     ioTrace('after JSON.parse'),
@@ -79,7 +79,17 @@ const setAndApplyPreferences = compose(
     // () => setItem('preferences', JSON.stringify({ 'background-color': 'red' })) 
 );
 
-setAndApplyPreferences('preferences').unsafePerformIO();
+const ff = setAndApplyPreferences('preferences');
+
+console.log('after composition');
+
+ff.unsafePerformIO();
+
+console.log('--------------------------------------------');
+
+console.log('after execution');
+
+console.log('before composition 2');
 
 const setAndApplyPreferencesRefactored = compose(
     chain(setStyle('#main')),
@@ -90,7 +100,11 @@ const setAndApplyPreferencesRefactored = compose(
     getItem
 );
 
-setAndApplyPreferencesRefactored('preferences').unsafePerformIO();
+const fff = setAndApplyPreferencesRefactored('preferences');
+
+console.log('after composition 2');
+
+fff.unsafePerformIO();
 
 const vv = compose(
     () => console.log('2'),
@@ -111,20 +125,26 @@ const querySelector = selector => new IO(() => {
 const sel = querySelector('input.username')
     .map(({ value: username }) =>  
         querySelector('input.email')
-            .map(({ value: email }) => `Hello ${username}, you're email is ${email}`)
-            .join()
+            .map(({ value: email }) => `Hello1 ${username}, you're email is ${email}`)
     )
+    .join()
     .map(x => console.log(x));
 
+console.log('before releasing the beast');
+
 sel.unsafePerformIO();
+
+console.log('--------------------------------------------');
 
 const sel2 = querySelector('input.username')
     .chain(({ value: username }) => 
         querySelector('input.email')
-            .chain(({ value: email }) => IO.of(`Hello ${username}, you're email is ${email}`))
+            .chain(({ value: email }) => IO.of(`Hello2 ${username}, you're email is ${email}`))
     )
     .map(x => console.log(x));
     
+console.log('before releasing the beast');
+
 sel2.unsafePerformIO();
 
 console.log('--------------------------------------------');
